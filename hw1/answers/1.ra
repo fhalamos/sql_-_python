@@ -1,0 +1,5 @@
+π name -> name (
+	σ avgscore > 9 (
+		games
+	)
+)

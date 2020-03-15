@@ -1,0 +1,46 @@
+/* 
+Give the name of the designer who has designed the most number of games (given as designer).
+
+The first set is tuples of designers and the amount of games they have done. Lets call this set A
+
+The second set is a natural join between A (A1) and A (A2), but selecting all element where count in A1 is smaller than count in A2. Hence, the result is the set of all numbers that are smaller than some other age. The only number that is not in this set is hence the max number.
+
+Finally, the substraction of this two sets leads to the result of the max element.
+
+Based on https://diego.assencio.com/?index=85b94ecb875ce2f318beabfa7f0150a7
+*/
+
+π designer1 -> designer (
+
+	π designer->designer1, count->cnt1 (
+		γ designer; count(g_id) -> count (
+			π designer-> designer, g_id (
+					designers ⨝ desgame
+				)
+		)
+	)
+
+	-
+
+	π designer1, cnt1 (
+		σ cnt1<cnt2 (
+			(π designer->designer1, count->cnt1 (
+				γ designer; count(g_id) -> count (
+					π designer-> designer, g_id (
+							designers ⨝ desgame
+						)
+					)
+				)
+			)
+			⨝
+			(π designer->designer2, count->cnt2 (
+				γ designer; count(g_id) -> count (
+					π designer-> designer, g_id (
+							designers ⨝ desgame
+							)
+					)
+				)
+			)
+		)
+	)
+)

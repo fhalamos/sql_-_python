@@ -1,0 +1,5 @@
+γ; count(g_id)-> cnt (
+	π g_id->g_id (games)
+	-
+	π g_id->g_id (desgame)
+)

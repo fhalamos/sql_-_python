@@ -1,0 +1,10 @@
+τ avgscore desc (π name-> name, avgscore->avgscore (games ⨝
+										π g_id (
+											desgame ⨝ (
+												π des_id (
+													σ designer = 'Corey Konieczka' (designers)
+												)
+											)
+										)
+									)
+								)

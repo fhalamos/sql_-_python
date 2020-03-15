@@ -1,0 +1,2 @@
+-- Find the category name of the most 5 popular categories, where popularity is defined as the highest average/mean of avgscore for games in the category (given as category, avg)
+select c.category as category, avg(g.avgscore) as avg from gamecat as gc,categories as c,games as g where gc.c_id = c.c_id and gc.g_id = g.g_id group by c.c_id order by avg desc limit 5;

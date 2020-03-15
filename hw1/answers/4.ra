@@ -1,0 +1,7 @@
+σ minscore > 8 (
+	γ designer; min(avgscore) -> minscore (
+		π designer-> designer, g_id, avgscore (
+				designers ⨝ desgame ⨝ games
+			)
+		)
+)

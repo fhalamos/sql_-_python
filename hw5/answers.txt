@@ -1,0 +1,172 @@
+1) 992 kb 
+
+How big (in kb or mb) are the total data pages (e.g. student, course, + takes)
+
+Student
+sname str(20) unique = 20 bytes
+year int = 4 bytes
+sid big = 8 bytes
+major int = 4 bytes
+= 36 bytes
+
+Course
+cname str(40) unique = 40 byte
+cid int = 4 bytes 
+major int = 4 bytes
+= 48 bytes
+
+Takes
+cid int = 4 bytes
+sid big = 8 bytes
+grade int = 4 bytes
+= 16 bytes
+
+We have 12,000 students, 300 courses, and 34,000 takes records.
+=12,000 * 36 + 300 * 48 + 34,000 * 16 
+=990,400 bytes of data
+
+But, considering page sizes is 4000 bytes, we need 247.6 pages for the 990,400 bytes. Hence, we need a total of 248 pages.
+248 pages, each size 4000 bytes, then our total data pages would be 992 kb.
+
+
+2a) 249 search key values per page/node
+
+What are the max search key values per page/node for sid index on takes?
+
+page_size >= (m-1) * size(search key) + m * size(pointer)
+
+Each index entry is the search key + record id pointer. No additional metadata.
+
+Page pointers and pointers to a record ID are 8 bytes
+
+Takes has an clustered B+tree index on sid
+
+4000 bytes >= (m-1) * size(big) + m * size(pointer)
+=(m-1)*8 + m *8 = 16m-8
+4008 bytes >=16m
+m=250 (number of pointers)
+m-1=249 (number of search ky values)
+
+2b) 124
+
+What are the min search key values per page/node  for sid index on takes (assuming you want as dense pages as possible) ?
+
+m/2 <= number of pointers <= degree (m)
+We know degree(m) = 250
+Hence m/2 = 125
+If minimal number of pointers is 125, the min sear key values is 124.
+
+3) 3
+
+How tall (root to leaf node) is the index (worst case) for the sid index on takes?
+
+The worst case is that each index page has the minimal number of pointers (min_p)
+
+Then height = ceiling(log_{min_p} number_records)
+min_p = 125, as found in 2b.
+
+So, height = ceiling(log_125 34,000) = 3.
+
+
+4) 20 ms
+
+How long (ms) will it take to find a student's record by sname?
+
+student has an unclustered hash index on sname.
+
+We need only to hash the sname, seek the corresponding value in the hash buckets, and then jump to the data =
+2*(1 seek time + 1 read time) =
+2*(9ms + 1ms) = 20 ms
+
+5) 11,020 ms
+
+How long (ms) will it take to find all students whose year is 2020. Assume we have no more than 1,100 students with this year.
+
+student have an unclustered B+tree index on year
+
+Time to find first student with year 2020 = 
+traverse tree and find leaf node + read record
+
+traverse tree = height tree * cost each step
+height = log_degree n_records
+
+The degree is determined by the number of pointers by node (assuming min number of pointers per node - worst case scenario)
+
+node size >= (max_m-1)*size(search keys) + max_m*size(pointer)
+4000 bytes >= (max_m-1)*4 +max_m*8 = 12max_m -4
+4004/12 >= max_m -> max_m= 333
+min_m = ceiling(max_m/2) = 167 
+
+So, height = celiling(log_167 12,000) = 2.
+
+Because the index is unclustered, we cannot just find the first record and then move to the next record in read time. Records may be in different blocks. Hence, for each record we need have a seek time too.
+
+[Neglecting leaf linked list traversal, like the book does. If we would not neglect this, We will move through sibling nodes of the lead node reading and getting the pointers to the different records. Time to find following nodes = 1100 * read time (because they are next to each other)]
+
+So,
+time to find first node = height * (seek time + read time)
+For each of the 1100 nodes we have to read the record (seek time + read time).
+
+So, this would be a total of =
+2 * (9ms+1ms) + 1100 * (9ms + 1ms)=
+20 + 11,000 = 11,020 ms
+
+6) 520 ms
+
+How long (ms) will it take to find all courses with major = 134. Assume there are no more than 50 courses per major.
+
+course has an unclustered B+tree index on major.
+
+Very similar to previous one.
+
+Total time = time to traverse tree + time to read
+height tree = log_degree number_records
+number_records = 300
+
+min degree is 167 as in the previous case (same node size and same search keys size)
+height = ceiling(log_167 (300)) = 2
+
+Time to traverse tree = 2 * (9ms + 1 ms)
+Time to read one record = (9ms + 1ms)
+
+So, total =
+2 * (9ms + 1ms) + 50 * (9ms + 1ms) = 
+20 + 500 = 520 ms
+
+
+7)
+
+If only 2 pages can be held in memory, how many pages will be read for a block nested loop join between takes and courses with takes as the outer and courses as inner (given in takes:X and courses:Y, do not worry about seeks).
+
+34,000 takes records, each record is 16 bytes, so its 544,000 bytes or takes information. Each page is 4000 bytes, so we have 136 pages of takes
+300 courses recors, each record is 48 bytes, so its 14400 bytes of courses information. That would be 14400 bytes, so we have ceiling(3.6)=4 pages of courses.
+
+Total number of pages read =
+[Pages read for takes] + [Pages read for takes] * [Pages read for courses]
+(we need to read all takes pages, and for each time we reed one, we read all pages of courses)
+136 + 136*4 = 680
+
+
+8) 140
+
+If 151 pages could be held in memory, what join algorithm would be best (fewest pages read and written) for equi-joining takes and courses? How many pages (in terms of takes and courses) would this join algorithm read (given in takes:X and courses:Y, do not worry about seeks)? 
+
+We know
+# pages of takes =136
+# pages of courses = 4
+
+If we do a chunk join algorithm (chunk for a group of pages), we could try both takes(1) or courses(2) as the outter joins.
+
+Number of pages read in chunk join algorithm is given by:
+[R]+ ceiling ([R]/(B-2)) * [S]
+where B number of pages available, [R] number of pages of outer relation, [S] number of pages of inner relation.
+
+Case (1)
+136 + ceiling(136/149)*4 = 136 + 1*4= 140
+
+Case (2)
+4 + ceiling(4/149)*136 = 140.
+
+So, either algorithm would be the same, and the number of pages read would be 140. This actually because we can save in memory all pages at the same time.
+
+9)
